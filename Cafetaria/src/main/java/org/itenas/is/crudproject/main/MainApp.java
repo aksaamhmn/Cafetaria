@@ -15,6 +15,7 @@ import java.util.Scanner;
  */
 public class MainApp {
     public static void main(String[] args) {
+        int coba;
 //        Scanner scanner = new Scanner(System.in);
 //        int pilihan;
 //        do {
