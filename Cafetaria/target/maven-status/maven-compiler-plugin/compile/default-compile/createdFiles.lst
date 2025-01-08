@@ -1,10 +1,2 @@
-org\itenas\is\crudproject\model\Penjualan.class
-org\itenas\is\crudproject\servicesdbimpl\MenuCrudServicesDBImpl.class
 org\itenas\is\crudproject\model\User.class
-org\itenas\is\crudproject\dbconfig\ConnectionManager.class
-org\itenas\is\crudproject\servicesdbimpl\PenjualanCrudServicesDBImpl.class
 org\itenas\is\crudproject\services\UserAuthService.class
-org\itenas\is\crudproject\servicesdbimpl\UserAuthServiceDBImpl.class
-org\itenas\is\crudproject\model\Menu.class
-org\itenas\is\crudproject\dbconfig\TestConnectionDb.class
-org\itenas\is\crudproject\services\CrudService.class
