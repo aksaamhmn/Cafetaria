@@ -13,7 +13,8 @@ import java.util.List;
  */
 public interface CrudService<T> {
     void create(T object);
-    T findOne(int idMenu);
+    T findOne(String namaMenu);
+    List<T> findByNameContaining(String namaMenu);
     List<T> findAll();
     void update(int idMenu, T object);
     boolean delete(int idMenu);

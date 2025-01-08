@@ -4,12 +4,18 @@
  */
 package org.itenas.is.crudproject.services;
 
+import java.util.List;
+
 /**
  *
  * @author Kurnia R. Putra
+ * @param <T>
  */
-public interface PenghasilanService {
-    public double hitungTotalTunjangan();
-    public double hitungTotalGaji();
-    
+public interface CrudService<T> {
+    void create(T object);
+    T findOne(String namaMenu);
+    List<T> findByNameContaining(String namaMenu);
+    List<T> findAll();
+    void update(int idMenu, T object);
+    boolean delete(int idMenu);
 }
