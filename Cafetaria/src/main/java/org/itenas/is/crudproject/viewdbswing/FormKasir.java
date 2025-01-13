@@ -1,5 +1,17 @@
 package org.itenas.is.crudproject.viewdbswing;
 
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.Printable;
+import static java.awt.print.Printable.NO_SUCH_PAGE;
+import static java.awt.print.Printable.PAGE_EXISTS;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +23,8 @@ import java.util.Locale;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
 import net.coobird.thumbnailator.Thumbnails;
 import org.itenas.is.crudproject.dbconfig.ConnectionManager;
@@ -27,6 +41,16 @@ import org.itenas.is.crudproject.viewdbswing.FormLogin;
  * @author userr
  */
 public class FormKasir extends javax.swing.JFrame {
+    Double totalAmount=0.0;
+    Double cash=0.0;
+    Double balance=0.0;
+    Double bHeight=1.50;
+
+    ArrayList<String> menuAry = new ArrayList<>();
+    ArrayList<String> qtyAry = new ArrayList<>();
+    ArrayList<String> hargaAry = new ArrayList<>();
+    ArrayList<String> jumlahAry = new ArrayList<>();
+    
     private final User user;
     private CrudService<Menu> menuCrudService;
 
@@ -466,7 +490,7 @@ public class FormKasir extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
             .addGroup(transaksiLayout.createSequentialGroup()
-                .addGap(118, 118, 118)
+                .addGap(148, 148, 148)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         transaksiLayout.setVerticalGroup(
@@ -523,7 +547,7 @@ public class FormKasir extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(Background, javax.swing.GroupLayout.DEFAULT_SIZE, 573, Short.MAX_VALUE)
+            .addComponent(Background, javax.swing.GroupLayout.PREFERRED_SIZE, 573, Short.MAX_VALUE)
         );
 
         pack();
@@ -636,31 +660,11 @@ public class FormKasir extends javax.swing.JFrame {
     }//GEN-LAST:event_txtCashKeyTyped
 
     private void txtCashKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCashKeyReleased
-        try {
-            // Validasi input
-            if (txtCash.getText().trim().isEmpty() || txtTotal.getText().trim().isEmpty()) {
-                txtKembali.setText("");
-                return;
-            }
-
-            // Hilangkan format angka sebelum parsing
-            String cashText = txtCash.getText().trim().replaceAll(",", "");
-            String totalText = txtTotal.getText().trim().replaceAll(",", "");
-
-            // Parsing angka
-            int cash = Integer.parseInt(cashText);
-            int totalBayar = Integer.parseInt(totalText);
-
-            // Hitung kembalian
-            int hasil = cash - totalBayar;
-            txtKembali.setText(cash >= totalBayar ? String.valueOf(hasil) : "");
-        } catch (NumberFormatException e) {
-            txtKembali.setText(""); // Reset jika input tidak valid
-        }
+        updateKembalian();
     }//GEN-LAST:event_txtCashKeyReleased
 
     private void txtKembaliActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtKembaliActionPerformed
-        // TODO add your handling code here:
+        updateKembalian();
     }//GEN-LAST:event_txtKembaliActionPerformed
 
     private void btnBayarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBayarActionPerformed
@@ -679,21 +683,39 @@ public class FormKasir extends javax.swing.JFrame {
                     String qty = model.getValueAt(i, 3).toString();
                     String harga = model.getValueAt(i, 4).toString();
                     String jumlah = model.getValueAt(i, 5).toString();
-
+                    
+                    menuAry.add(item);
+                    qtyAry.add(qty);
+                    hargaAry.add(harga);
+                    jumlahAry.add(jumlah);
+                    
                     // Buat objek Penjualan dan simpan melalui layanan
                     Penjualan penjualan = new Penjualan(noFaktur, tanggal, item, qty, harga, jumlah);
                     penjualanService.create(penjualan);
                 }
 
                 JOptionPane.showMessageDialog(this, "Transaksi berhasil", "Penjualan", JOptionPane.INFORMATION_MESSAGE);
+                
+                showReceipt();
+                int konfirmasi=JOptionPane.showConfirmDialog(null, "Apakah ingin mencetak Struk", "Cetak Faktur", JOptionPane.YES_NO_OPTION);
+                if(konfirmasi==0){
+                    PrinterJob pj = PrinterJob.getPrinterJob();        
+                    pj.setPrintable(new BillPrintable(),getPageFormat(pj));
+                    try {
+                            pj.print();
+                            removeAllArray();
+
+                        } catch (PrinterException ex) {
+                        }
+                }else{
+                    removeAllArray();
+                }
                 reset();
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, "Terjadi kesalahan: " + e.getMessage());
             }
-
             noFaktur();
         }
-
     }//GEN-LAST:event_btnBayarActionPerformed
 
     private void jScrollPane2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jScrollPane2MouseClicked
@@ -768,6 +790,30 @@ public class FormKasir extends javax.swing.JFrame {
     private javax.swing.JTextField txtTotal;
     // End of variables declaration//GEN-END:variables
 
+    private void updateKembalian(){
+        try {
+            // Validasi input
+            if (txtCash.getText().trim().isEmpty() || txtTotal.getText().trim().isEmpty()) {
+                txtKembali.setText("");
+                return;
+            }
+
+            // Hilangkan format angka sebelum parsing
+            String cashText = txtCash.getText().trim().replaceAll(",", "");
+            String totalText = txtTotal.getText().trim().replaceAll(",", "");
+
+            // Parsing angka
+            int cash = Integer.parseInt(cashText);
+            int totalBayar = Integer.parseInt(totalText);
+
+            // Hitung kembalian
+            int hasil = cash - totalBayar;
+            txtKembali.setText(cash >= totalBayar ? String.valueOf(hasil) : "");
+        } catch (NumberFormatException e) {
+            txtKembali.setText(""); // Reset jika input tidak valid
+        }
+    }
+    
     private void showdataitem() {
         DefaultTableModel model = (DefaultTableModel) menu_user.getModel();
         model.setRowCount(0);
@@ -905,5 +951,134 @@ public class FormKasir extends javax.swing.JFrame {
             menu.getHargaMenu(), 
             gambarIcon != null ? gambarIcon : "Gambar Tidak Ada" // Jika gambar gagal dimuat
         };
+    }
+    
+    public PageFormat getPageFormat(PrinterJob pj){
+        PageFormat pf = pj.defaultPage();
+        Paper paper = pf.getPaper();    
+
+        double bodyHeight = bHeight;  
+        double headerHeight = 5.0;                  
+        double footerHeight = 5.0;        
+        double width = cm_to_pp(8); 
+        double height = cm_to_pp(headerHeight+bodyHeight+footerHeight); 
+        paper.setSize(width, height);
+        paper.setImageableArea(0,10,width,height - cm_to_pp(1));  
+
+        pf.setOrientation(PageFormat.PORTRAIT);  
+        pf.setPaper(paper);    
+
+        return pf;
+    }
+   
+    protected static double cm_to_pp(double cm){
+        return toPPI(cm * 0.393600787);            
+    }
+ 
+    protected static double toPPI(double inch){
+        return inch * 72d;            
+    }
+
+    private void removeAllArray(){
+        menuAry.removeAll(menuAry);
+        qtyAry.removeAll(qtyAry);
+        hargaAry.removeAll(hargaAry);
+        jumlahAry.removeAll(jumlahAry);
+    }
+    
+    public void showReceipt() {
+            StringBuilder struk = new StringBuilder();
+            struk.append("      Warung Madep\n");
+            struk.append("Jl. Cikutra No.12, Bandung\n");
+            struk.append("Telp: +622112345678\n");
+            struk.append("-------------------------------------\n");
+            struk.append("No Faktur: ").append(lblFaktur.getText()).append("\n");
+            struk.append("Tanggal  : ").append(lblTanggal.getText()).append("\n");
+            struk.append("-------------------------------------\n");
+            struk.append(" Nama Menu          Qty    Harga   Jumlah\n");
+            struk.append("-------------------------------------\n");
+
+            for (int i = 0; i < menuAry.size(); i++) {
+                struk.append(String.format(" %-15s %d    %d   %d\n", 
+                menuAry.get(i), 
+                Integer.parseInt(qtyAry.get(i)), 
+                Integer.parseInt(hargaAry.get(i)), 
+                Integer.parseInt(jumlahAry.get(i))));
+            }
+
+            struk.append("-------------------------------------\n");
+            struk.append(" Total Belanja : ").append(txtTotal.getText()).append("\n");
+            struk.append(" Tunai         : ").append(txtCash.getText()).append("\n");
+            struk.append(" Kembali       : ").append(txtKembali.getText()).append("\n");
+            struk.append("-------------------------------------\n");
+            struk.append("  TERIMA KASIH ATAS KUNJUNGAN ANDA  \n");
+            struk.append(" Barang yang dibeli tidak dapat dikembalikan\n");
+
+            // Menampilkan struk dalam JOptionPane menggunakan JTextArea
+            JTextArea textArea = new JTextArea(struk.toString());
+            textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+            textArea.setEditable(false);
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            scrollPane.setPreferredSize(new Dimension(400, 400));
+
+            JOptionPane.showMessageDialog(null, scrollPane, "Struk Pembelian", JOptionPane.INFORMATION_MESSAGE);
+        }
+    
+    public class BillPrintable implements Printable {
+
+        public int print(Graphics graphics, PageFormat pageFormat,int pageIndex) throws PrinterException {    
+            int r= menuAry.size();
+            ImageIcon icon=new ImageIcon("C:logo.jpg"); 
+            int result = NO_SUCH_PAGE;    
+
+            if (pageIndex == 0) {                    
+                Graphics2D g2d = (Graphics2D) graphics;                    
+                double width = pageFormat.getImageableWidth();                               
+                g2d.translate((int) pageFormat.getImageableX(),(int) pageFormat.getImageableY()); 
+                FontMetrics metrics=g2d.getFontMetrics(new Font("Arial",Font.BOLD,7));
+                try{
+                    int y=20;
+                    int yShift = 10;
+                    int headerRectHeight=15;
+                    int headerRectHeighta=40;
+
+                    g2d.setFont(new Font("Monospaced",Font.PLAIN,9));
+                    g2d.drawImage(icon.getImage(), 50, 20, 90, 30, rootPane);y+=yShift+30;
+                    g2d.drawString("-------------------------------------",12,y);y+=yShift;
+                    g2d.drawString("      Warung Madep      ",12,y);y+=yShift;
+                    g2d.drawString("   Jl.Cikutra No.12, Bandung, Jawa Barat  ",12,y);y+=yShift;
+                    g2d.drawString("   +622112345678  ",12,y);y+=yShift;
+                    g2d.drawString("   mdp@warungmadep.com   ",12,y);y+=yShift;
+                    g2d.drawString("-------------------------------------",12,y);y+=headerRectHeight;
+                    g2d.drawString("No: "+lblFaktur.getText()+"  ",12,y);y+=yShift;
+                    g2d.drawString("Tanggal: "+lblTanggal.getText()+"  ",12,y);y+=yShift;
+                    g2d.drawString("-------------------------------------",12,y);y+=headerRectHeight;
+
+                    g2d.drawString(" Nama Menu                 Price   ",10,y);y+=yShift;
+                    g2d.drawString("-------------------------------------",10,y);y+=headerRectHeight;
+
+                    for(int s=0; s<r; s++){
+                        g2d.drawString(" "+menuAry.get(s)+"                            ",10,y);y+=yShift;
+                        g2d.drawString("      "+qtyAry.get(s)+" * "+hargaAry.get(s),10,y); g2d.drawString(jumlahAry.get(s),160,y);y+=yShift;
+                    }
+
+                    g2d.drawString("-------------------------------------",10,y);y+=yShift;
+                    g2d.drawString(" Total belanja:               "+txtTotal.getText()+"   ",10,y);y+=yShift;
+                    g2d.drawString("-------------------------------------",10,y);y+=yShift;
+                    g2d.drawString(" Tunai      :                 "+txtCash.getText()+"   ",10,y);y+=yShift;
+                    g2d.drawString("-------------------------------------",10,y);y+=yShift;
+                    g2d.drawString(" Kembali    :                 "+txtKembali.getText()+"   ",10,y);y+=yShift;
+
+                    g2d.drawString("*",10,y);y+=yShift;
+                    g2d.drawString("   TERIMA KASIH ATAS KUNJUNGAN ANDA  ",10,y);y+=yShift;
+                    g2d.drawString("*",10,y);y+=yShift;
+                    g2d.drawString("   Mohon, Maaf Barang yang dibeli    ",10,y);y+=yShift;
+                    g2d.drawString("    Tidak bisa dikembalikan lagi     ",10,y);y+=yShift;       
+                } catch(Exception e){
+                    e.printStackTrace();
+                } result = PAGE_EXISTS;    
+            }    
+            return result;    
+        }
     }
 }

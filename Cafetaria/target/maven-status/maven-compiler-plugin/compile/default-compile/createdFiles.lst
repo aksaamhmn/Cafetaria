@@ -49,6 +49,7 @@ org\itenas\is\crudproject\viewdbswing\FormKasir$6.class
 org\itenas\is\crudproject\viewdbswing\FormKasir$15.class
 org\itenas\is\crudproject\viewdbswing\AdminDashboard$4.class
 org\itenas\is\crudproject\services\UserAuthService.class
+org\itenas\is\crudproject\viewdbswing\FormKasir$BillPrintable.class
 org\itenas\is\crudproject\viewdbswing\AdminDashboard$11.class
 org\itenas\is\crudproject\viewdbswing\FormKasir$3.class
 org\itenas\is\crudproject\viewdbswing\FormRegister$4.class

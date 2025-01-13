@@ -8,7 +8,7 @@ public class ConnectionManager {
     // Inisialisasi nilai atribut database
     private final String url = "jdbc:mysql://localhost:3306/cafetaria?useSSL=false";
     private final String username = "root";
-    private final String password = "basdat2024";
+    private final String password = "Basdat2024";
     private final String driver = "com.mysql.cj.jdbc.Driver";
 
     // Constructor untuk memuat driver JDBC
